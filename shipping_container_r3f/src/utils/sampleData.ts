@@ -7,9 +7,9 @@ import type { InputData } from '../types';
  */
 export const sampleData: InputData = {
   container: {
-    length: 120, // cm
-    width: 80,   // cm
-    height: 80,  // cm
+    length: 589, // cm
+    width: 234,   // cm
+    height: 226,  // cm
   },
   boxTypes: [
     {
@@ -21,7 +21,7 @@ export const sampleData: InputData = {
       weight: 10,
       isFragile: true,
       color: '#FF6B6B', // Coral red
-      quantity: 5,
+      quantity: 50,
     },
     {
       id: 'textiles',
@@ -31,8 +31,8 @@ export const sampleData: InputData = {
       height: 10,
       weight: 3,
       isFragile: false,
-      color: '#4ECDC4', // Teal
-      quantity: 8,
+      color: '#5f4ecd', // Teal
+      quantity: 80,
     },
     {
       id: 'books',
@@ -42,8 +42,8 @@ export const sampleData: InputData = {
       height: 20,
       weight: 8,
       isFragile: false,
-      color: '#95E1D3', // Mint
-      quantity: 6,
+      color: '#d6e195', // Mint
+      quantity: 60,
     },
     {
       id: 'ceramics',
@@ -53,8 +53,8 @@ export const sampleData: InputData = {
       height: 25,
       weight: 5,
       isFragile: true,
-      color: '#F38181', // Light coral
-      quantity: 4,
+      color: '#a3f381', // Light coral
+      quantity: 40,
     },
   ],
 };
