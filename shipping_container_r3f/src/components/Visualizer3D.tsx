@@ -146,8 +146,10 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
   const handleBoxClick = (box: PackedBox) => {
     if (selectedBoxTypeId === box.boxType.id) {
       setSelectedBoxTypeId(null); // Deselect if already selected
+      setHoveredBox(null); // Clear tooltip
     } else {
       setSelectedBoxTypeId(box.boxType.id);
+      setHoveredBox(box); // Show details for this box
     }
   };
 
