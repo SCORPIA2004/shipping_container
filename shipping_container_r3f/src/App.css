@@ -1385,7 +1385,6 @@ button:hover {
 .box-card-compact__fragile {
   color: #ff6b6b;
 }
-
 .box-card-compact__quantity {
   display: flex;
   flex-direction: row;
