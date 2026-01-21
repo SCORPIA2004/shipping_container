@@ -839,6 +839,7 @@ button:hover {
   button {
     padding: 0.5rem 1rem;
     font-size: 0.85rem;
+    width: fit-content;
   }
 
   .primary-button {
@@ -1008,7 +1009,6 @@ button:hover {
   button {
     padding: 0.35rem 0.75rem;
     font-size: 0.75rem;
-    width: 100%;
   }
 }
 
