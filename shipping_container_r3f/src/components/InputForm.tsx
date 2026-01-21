@@ -36,7 +36,7 @@ const CONTAINER_PRESETS = [
 function InputForm({ onSubmit }: InputFormProps) {
   const [container, setContainer] = useState<Container>(sampleData.container);
   const [boxTypes, setBoxTypes] = useState<BoxType[]>(sampleData.boxTypes);
-  
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBox, setEditingBox] = useState<BoxType | null>(null);
@@ -56,7 +56,7 @@ function InputForm({ onSubmit }: InputFormProps) {
   const handleQuantityChange = (id: string, value: string) => {
     const numValue = parseInt(value) || 1;
     setBoxTypes((prev) =>
-      prev.map((box) => (box.id === id ? { ...box, quantity: numValue } : box))
+      prev.map((box) => (box.id === id ? { ...box, quantity: numValue } : box)),
     );
   };
 
@@ -100,7 +100,11 @@ function InputForm({ onSubmit }: InputFormProps) {
   // Validate and submit
   const handleSubmit = () => {
     // Basic validation
-    if (container.length <= 0 || container.width <= 0 || container.height <= 0) {
+    if (
+      container.length <= 0 ||
+      container.width <= 0 ||
+      container.height <= 0
+    ) {
       alert("Container dimensions must be positive numbers");
       return;
     }
@@ -138,18 +142,23 @@ function InputForm({ onSubmit }: InputFormProps) {
 
         {/* Quick Presets */}
         <div className="input-form__preset-select-wrapper">
-          <select 
+          <select
             className="input-form__select"
             onChange={(e) => {
-              const preset = CONTAINER_PRESETS.find(p => p.name === e.target.value);
+              const preset = CONTAINER_PRESETS.find(
+                (p) => p.name === e.target.value,
+              );
               if (preset) handlePresetSelect(preset);
             }}
             defaultValue=""
           >
-            <option value="" disabled>Load Container Preset...</option>
+            <option value="" disabled>
+              Load Container Preset...
+            </option>
             {CONTAINER_PRESETS.map((preset) => (
               <option key={preset.name} value={preset.name}>
-                {preset.name} ({preset.dimensions.length}x{preset.dimensions.width}x{preset.dimensions.height})
+                {preset.name} ({preset.dimensions.length}x
+                {preset.dimensions.width}x{preset.dimensions.height})
               </option>
             ))}
           </select>
@@ -161,6 +170,7 @@ function InputForm({ onSubmit }: InputFormProps) {
             <input
               type="number"
               className="input-form__input"
+              style={{ maxWidth: "fit-content" }}
               value={container.length}
               onChange={(e) => handleContainerChange("length", e.target.value)}
               min="1"
@@ -172,6 +182,7 @@ function InputForm({ onSubmit }: InputFormProps) {
             <input
               type="number"
               className="input-form__input"
+              style={{ maxWidth: "fit-content" }}
               value={container.width}
               onChange={(e) => handleContainerChange("width", e.target.value)}
               min="1"
@@ -183,6 +194,7 @@ function InputForm({ onSubmit }: InputFormProps) {
             <input
               type="number"
               className="input-form__input"
+              style={{ maxWidth: "fit-content" }}
               value={container.height}
               onChange={(e) => handleContainerChange("height", e.target.value)}
               min="1"
@@ -219,7 +231,12 @@ function InputForm({ onSubmit }: InputFormProps) {
                   <span className="box-card-compact__name">{box.name}</span>
                   <span className="box-card-compact__dims">
                     {box.length}×{box.width}×{box.height} cm • {box.weight}kg
-                    {box.isFragile && <span className="box-card-compact__fragile"> • Fragile</span>}
+                    {box.isFragile && (
+                      <span className="box-card-compact__fragile">
+                        {" "}
+                        • Fragile
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div className="box-card-compact__quantity">
@@ -228,7 +245,9 @@ function InputForm({ onSubmit }: InputFormProps) {
                     type="number"
                     className="box-card-compact__qty-input"
                     value={box.quantity}
-                    onChange={(e) => handleQuantityChange(box.id, e.target.value)}
+                    onChange={(e) =>
+                      handleQuantityChange(box.id, e.target.value)
+                    }
                     min="1"
                   />
                 </div>
