@@ -8,13 +8,15 @@ interface BoxMeshProps {
   scale: number;
   onHover?: (box: PackedBox | null) => void;
   onClick?: (box: PackedBox) => void;
+  isSelected?: boolean;
+  isDimmed?: boolean;
 }
 
 /**
  * Individual box mesh component for 3D visualization
  * Renders a colored box with label
  */
-function BoxMesh({ box, scale, onHover, onClick }: BoxMeshProps) {
+function BoxMesh({ box, scale, onHover, onClick, isSelected, isDimmed }: BoxMeshProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
@@ -50,9 +52,23 @@ function BoxMesh({ box, scale, onHover, onClick }: BoxMeshProps) {
     return new THREE.EdgesGeometry(boxGeo);
   }, [sizeX, sizeY, sizeZ]);
 
-  // Colors
+  // Colors - handle selection/dimming states
   const baseColor = box.boxType.color;
-  const edgeColor = "#222";
+  const edgeColor = isSelected ? "#ffff00" : "#222";
+  
+  // Determine visual state
+  const getColor = () => {
+    if (isSelected) return "#ffffff";
+    if (hovered) return "#ffffff";
+    return baseColor;
+  };
+  
+  const getOpacity = () => {
+    if (isDimmed) return 0.25;
+    if (isSelected) return 0.95;
+    if (hovered) return 0.9;
+    return 0.85;
+  };
 
   return (
     <group position={[centerX, centerY, centerZ]}>
@@ -65,15 +81,23 @@ function BoxMesh({ box, scale, onHover, onClick }: BoxMeshProps) {
       >
         <boxGeometry args={[sizeX, sizeY, sizeZ]} />
         <meshStandardMaterial
-          color={hovered ? "#ffffff" : baseColor}
-          opacity={hovered ? 0.9 : 0.85}
+          color={getColor()}
+          opacity={getOpacity()}
           transparent
         />
       </mesh>
 
+      {/* Selection outline */}
+      {isSelected && (
+        <mesh>
+          <boxGeometry args={[sizeX + 0.02, sizeY + 0.02, sizeZ + 0.02]} />
+          <meshBasicMaterial color="#ffff00" wireframe opacity={0.8} transparent />
+        </mesh>
+      )}
+
       {/* Box edges for better visibility */}
       <lineSegments geometry={edgesGeometry}>
-        <lineBasicMaterial color={edgeColor} />
+        <lineBasicMaterial color={edgeColor} linewidth={isSelected ? 2 : 1} />
       </lineSegments>
 
       {/* Label on top face */}
