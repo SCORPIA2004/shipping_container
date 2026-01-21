@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
@@ -39,11 +39,13 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [hoveredBox, setHoveredBox] = useState<PackedBox | null>(null);
-  const [selectedBoxTypeId, setSelectedBoxTypeId] = useState<string | null>(null);
+  const [selectedBoxTypeId, setSelectedBoxTypeId] = useState<string | null>(
+    null,
+  );
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isPanLocked, setIsPanLocked] = useState(false);
-  const [showStats, setShowStats] = useState(true);
+  const [showStats, setShowStats] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
 
   // Scale factor to make container fit nicely in view
@@ -65,7 +67,8 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
       setIsFullscreen(!!document.fullscreenElement);
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   // Reset camera to initial position
@@ -142,6 +145,53 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
     setHoveredBox(box);
   };
 
+  // Calculate which boxes are topmost (not covered by other boxes above them)
+  const getTopmostBoxIds = () => {
+    if (!packingResult?.boxes) return new Set();
+
+    const topmostBoxes = new Set<string>();
+
+    // For each box, check if any other box is directly above it
+    packingResult.boxes.forEach((box) => {
+      const boxTop = box.position.y + box.dimensions.height;
+      let isTopmost = true;
+
+      // Check if any box covers this one from above
+      for (const otherBox of packingResult.boxes) {
+        if (box.id === otherBox.id) continue;
+
+        const otherBoxBottom = otherBox.position.y;
+
+        // Quick check: if other box is below this one's top, skip
+        if (otherBoxBottom > boxTop + 0.1) continue;
+
+        const xOverlap =
+          box.position.x < otherBox.position.x + otherBox.dimensions.length &&
+          box.position.x + box.dimensions.length > otherBox.position.x;
+        const zOverlap =
+          box.position.z < otherBox.position.z + otherBox.dimensions.width &&
+          box.position.z + box.dimensions.width > otherBox.position.z;
+
+        // If other box is directly above this one and overlaps in X and Z
+        if (xOverlap && zOverlap && Math.abs(boxTop - otherBoxBottom) < 0.1) {
+          isTopmost = false;
+          break;
+        }
+      }
+
+      if (isTopmost) {
+        topmostBoxes.add(box.id);
+      }
+    });
+
+    return topmostBoxes;
+  };
+
+  const topmostBoxIds = useMemo(
+    () => getTopmostBoxIds(),
+    [packingResult?.boxes],
+  );
+
   // Handle box click - toggle selection for all boxes of the same type
   const handleBoxClick = (box: PackedBox) => {
     if (selectedBoxTypeId === box.boxType.id) {
@@ -165,43 +215,51 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
           <h2>3D View</h2>
         </div>
         <div className="visualizer-header__controls">
-          <button 
-            onClick={() => setIsPanLocked(!isPanLocked)} 
-            className={`control-button ${isPanLocked ? 'active' : ''}`}
+          <button
+            onClick={() => setIsPanLocked(!isPanLocked)}
+            className={`control-button ${isPanLocked ? "active" : ""}`}
             title={isPanLocked ? "Unlock Panning" : "Lock Panning"}
           >
             {isPanLocked ? <FiLock /> : <FiUnlock />}
           </button>
-          <button 
-            onClick={() => setShowStats(!showStats)} 
-            className={`control-button ${showStats ? 'active' : ''}`}
+          <button
+            onClick={() => setShowStats(!showStats)}
+            className={`control-button ${showStats ? "active" : ""}`}
             title="Toggle Stats"
           >
             {showStats ? <FiEye /> : <FiEyeOff />}
           </button>
-          <button 
-            onClick={() => setShowInstructions(!showInstructions)} 
-            className={`control-button ${showInstructions ? 'active' : ''}`}
+          <button
+            onClick={() => setShowInstructions(!showInstructions)}
+            className={`control-button ${showInstructions ? "active" : ""}`}
             title="Toggle Instructions"
           >
             <FiInfo />
           </button>
-          <button onClick={handleResetCamera} className="control-button" title="Reset Camera">
+          <button
+            onClick={handleResetCamera}
+            className="control-button"
+            title="Reset Camera"
+          >
             <FiRotateCcw />
           </button>
-          <button onClick={toggleFullscreen} className="control-button" title="Fullscreen">
+          <button
+            onClick={toggleFullscreen}
+            className="control-button"
+            title="Fullscreen"
+          >
             {isFullscreen ? <FiMinimize /> : <FiMaximize />}
           </button>
         </div>
       </div>
 
-      <div 
+      <div
         ref={canvasWrapperRef}
         className={`canvas-wrapper ${isFullscreen ? "canvas-wrapper--fullscreen" : ""}`}
       >
         <Canvas
           className="r3f-canvas"
-          camera={{ position: [3, 3, 3], fov: 50 }}
+          camera={{ position: [5, 5, 5], fov: 50 }}
         >
           {/* Lighting */}
           <ambientLight intensity={0.5} />
@@ -235,7 +293,11 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
               onHover={handleBoxHover}
               onClick={handleBoxClick}
               isSelected={selectedBoxTypeId === box.boxType.id}
-              isDimmed={selectedBoxTypeId !== null && selectedBoxTypeId !== box.boxType.id}
+              isDimmed={
+                selectedBoxTypeId !== null &&
+                selectedBoxTypeId !== box.boxType.id
+              }
+              isTopmost={topmostBoxIds.has(box.id)}
             />
           ))}
 
@@ -248,8 +310,8 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
             enablePan={!isPanLocked}
             enableZoom={true}
             enableRotate={true}
-            minDistance={1}
-            maxDistance={10}
+            minDistance={0.5}
+            maxDistance={30}
           />
         </Canvas>
 
@@ -280,7 +342,9 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
             {isMobile ? (
               <>
                 <div className="visualizer__instructions-item">
-                  <span className="visualizer__instructions-key">Touch & Drag</span>
+                  <span className="visualizer__instructions-key">
+                    Touch & Drag
+                  </span>
                   <span>Rotate</span>
                 </div>
                 <div className="visualizer__instructions-item">
@@ -289,7 +353,9 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
                 </div>
                 {!isPanLocked && (
                   <div className="visualizer__instructions-item">
-                    <span className="visualizer__instructions-key">2 Fingers</span>
+                    <span className="visualizer__instructions-key">
+                      2 Fingers
+                    </span>
                     <span>Pan</span>
                   </div>
                 )}
@@ -310,7 +376,9 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
                 </div>
                 {!isPanLocked && (
                   <div className="visualizer__instructions-item">
-                    <span className="visualizer__instructions-key">R-Click</span>
+                    <span className="visualizer__instructions-key">
+                      R-Click
+                    </span>
                     <span>Pan</span>
                   </div>
                 )}
@@ -322,7 +390,6 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
             )}
           </div>
         )}
-
 
         {/* Touch controls for mobile/tablet */}
         {isMobile && (
@@ -387,8 +454,8 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
         <div className="stats-panel">
           <div className="stats-panel__header">
             <h3 className="stats-panel__title">Packing Summary</h3>
-            <button 
-              className="stats-panel__close-btn" 
+            <button
+              className="stats-panel__close-btn"
               onClick={() => setShowStats(false)}
               title="Close Stats"
             >
@@ -411,7 +478,8 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
               <FiBox className="stats-panel__icon" />
               <div className="stats-panel__content">
                 <span className="stats-panel__value">
-                  {packingResult.stats.packedBoxes}/{packingResult.stats.totalBoxes}
+                  {packingResult.stats.packedBoxes}/
+                  {packingResult.stats.totalBoxes}
                 </span>
                 <span className="stats-panel__label">Boxes Packed</span>
               </div>
@@ -440,7 +508,8 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
 
           {packingResult.unpacked.length > 0 && (
             <div className="stats-panel__warning">
-              {packingResult.stats.unpackedBoxes} box(es) could not fit in the container
+              {packingResult.stats.unpackedBoxes} box(es) could not fit in the
+              container
             </div>
           )}
 
@@ -459,8 +528,8 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
       )}
       {/* Stats Toggle Button (when hidden) */}
       {packingResult && !showStats && (
-        <button 
-          className="stats-panel__toggle-btn" 
+        <button
+          className="stats-panel__toggle-btn"
           onClick={() => setShowStats(true)}
           title="Show Stats"
         >

@@ -10,13 +10,14 @@ interface BoxMeshProps {
   onClick?: (box: PackedBox) => void;
   isSelected?: boolean;
   isDimmed?: boolean;
+  isTopmost?: boolean;
 }
 
 /**
  * Individual box mesh component for 3D visualization
  * Renders a colored box with label
  */
-function BoxMesh({ box, scale, onHover, onClick, isSelected, isDimmed }: BoxMeshProps) {
+function BoxMesh({ box, scale, onHover, onClick, isSelected, isDimmed, isTopmost = true }: BoxMeshProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
@@ -100,21 +101,23 @@ function BoxMesh({ box, scale, onHover, onClick, isSelected, isDimmed }: BoxMesh
         <lineBasicMaterial color={edgeColor} linewidth={isSelected ? 2 : 1} />
       </lineSegments>
 
-      {/* Label on top face */}
-      <Text
-        position={[0, sizeY / 2 + 0.02, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={Math.min(sizeX, sizeZ) * 0.15}
-        color="#000"
-        anchorX="center"
-        anchorY="middle"
-        maxWidth={sizeX * 0.9}
-      >
-        {box.boxType.name}
-      </Text>
+      {/* Label on top face - only show for topmost boxes */}
+      {isTopmost && (
+        <Text
+          position={[0, sizeY / 2 + 0.02, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          fontSize={Math.min(sizeX, sizeZ) * 0.15}
+          color="#000"
+          anchorX="center"
+          anchorY="middle"
+          maxWidth={sizeX * 0.9}
+        >
+          {box.boxType.name}
+        </Text>
+      )}
 
-      {/* Fragile indicator */}
-      {box.boxType.isFragile && (
+      {/* Fragile indicator - only show for topmost boxes */}
+      {isTopmost && box.boxType.isFragile && (
         <Text
           position={[0, sizeY / 2 + 0.02, sizeZ * 0.3]}
           rotation={[-Math.PI / 2, 0, 0]}
