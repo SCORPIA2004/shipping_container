@@ -146,8 +146,8 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
   };
 
   // Calculate which boxes are topmost (not covered by other boxes above them)
-  const getTopmostBoxIds = () => {
-    if (!packingResult?.boxes) return new Set();
+  const topmostBoxIds = useMemo(() => {
+    if (!packingResult?.boxes) return new Set<string>();
 
     const topmostBoxes = new Set<string>();
 
@@ -185,12 +185,7 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
     });
 
     return topmostBoxes;
-  };
-
-  const topmostBoxIds = useMemo(
-    () => getTopmostBoxIds(),
-    [packingResult?.boxes],
-  );
+  }, [packingResult]);
 
   // Handle box click - toggle selection for all boxes of the same type
   const handleBoxClick = (box: PackedBox) => {
