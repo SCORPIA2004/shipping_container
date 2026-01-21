@@ -86,6 +86,7 @@
 .secondary-button {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
+  width: fit-content;
 }
 
 .secondary-button:hover {
@@ -1007,12 +1008,6 @@ button:hover {
   button {
     padding: 0.35rem 0.75rem;
     font-size: 0.75rem;
-    width: 100%;
-  }
-
-  .primary-button,
-  .secondary-button,
-  .back-button {
     width: 100%;
   }
 }

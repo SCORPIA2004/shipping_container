@@ -170,6 +170,7 @@ function InputForm({ onSubmit }: InputFormProps) {
             <input
               type="number"
               className="input-form__input"
+              style={{ maxWidth: "4rem" }}
               value={container.length}
               onChange={(e) => handleContainerChange("length", e.target.value)}
               min="1"
@@ -181,6 +182,7 @@ function InputForm({ onSubmit }: InputFormProps) {
             <input
               type="number"
               className="input-form__input"
+              style={{ maxWidth: "4rem" }}
               value={container.width}
               onChange={(e) => handleContainerChange("width", e.target.value)}
               min="1"
@@ -192,6 +194,7 @@ function InputForm({ onSubmit }: InputFormProps) {
             <input
               type="number"
               className="input-form__input"
+              style={{ maxWidth: "4rem" }}
               value={container.height}
               onChange={(e) => handleContainerChange("height", e.target.value)}
               min="1"
