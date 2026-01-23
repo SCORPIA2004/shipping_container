@@ -1,10 +1,11 @@
 import { useRef, useState, useMemo } from "react";
 import { Text } from "@react-three/drei";
 import * as THREE from "three";
-import type { PackedBox } from "../types";
+import type { PackedBox, Container } from "../types";
 
 interface BoxMeshProps {
   box: PackedBox;
+  container: Container;
   scale: number;
   onHover?: (box: PackedBox | null) => void;
   onClick?: (box: PackedBox) => void;
@@ -17,14 +18,15 @@ interface BoxMeshProps {
  * Individual box mesh component for 3D visualization
  * Renders a colored box with label
  */
-function BoxMesh({ box, scale, onHover, onClick, isSelected, isDimmed, isTopmost = true }: BoxMeshProps) {
+function BoxMesh({ box, container, scale, onHover, onClick, isSelected, isDimmed, isTopmost = true }: BoxMeshProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
   // Calculate center position (algorithm gives bottom-left-back corner)
-  const centerX = (box.position.x + box.dimensions.length / 2) * scale;
+  // Offset X and Z to center container at origin, Y starts from base at 0
+  const centerX = (box.position.x + box.dimensions.length / 2 - container.length / 2) * scale;
   const centerY = (box.position.y + box.dimensions.height / 2) * scale;
-  const centerZ = (box.position.z + box.dimensions.width / 2) * scale;
+  const centerZ = (box.position.z + box.dimensions.width / 2 - container.width / 2) * scale;
 
   // Scaled dimensions
   const sizeX = box.dimensions.length * scale;

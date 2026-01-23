@@ -2,12 +2,12 @@ import type { InputData } from '../types';
 
 /**
  * Sample data for testing the visualizer
- * Container: Standard Euro pallet container size
- * Boxes: Mix of fragile and non-fragile items
+ * Container: Standard 40ft container size
+ * Boxes: Mix of fragile and non-fragile items with realistic shipping dimensions
  */
 export const sampleData: InputData = {
   container: {
-    length: 589, // cm
+    length: 1200, // cm (40ft container)
     width: 234,   // cm
     height: 226,  // cm
   },
@@ -15,46 +15,46 @@ export const sampleData: InputData = {
     {
       id: 'electronics',
       name: 'Electronics',
-      length: 30,
-      width: 20,
-      height: 15,
-      weight: 10,
+      length: 60,
+      width: 40,
+      height: 30,
+      weight: 20,
       isFragile: true,
       color: '#FF6B6B', // Coral red
-      quantity: 50,
+      quantity: 200,
     },
     {
       id: 'textiles',
       name: 'Textiles',
-      length: 40,
-      width: 30,
-      height: 10,
-      weight: 3,
+      length: 80,
+      width: 60,
+      height: 40,
+      weight: 15,
       isFragile: false,
       color: '#5f4ecd', // Teal
-      quantity: 80,
+      quantity: 50,
     },
     {
       id: 'books',
       name: 'Books',
-      length: 25,
-      width: 20,
-      height: 20,
-      weight: 8,
+      length: 50,
+      width: 40,
+      height: 50,
+      weight: 25,
       isFragile: false,
       color: '#d6e195', // Mint
-      quantity: 60,
+      quantity: 50,
     },
     {
       id: 'ceramics',
       name: 'Ceramics',
-      length: 20,
-      width: 20,
-      height: 25,
-      weight: 5,
+      length: 40,
+      width: 40,
+      height: 60,
+      weight: 30,
       isFragile: true,
       color: '#a3f381', // Light coral
-      quantity: 40,
+      quantity: 80,
     },
   ],
 };

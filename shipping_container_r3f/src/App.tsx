@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiBox } from "react-icons/fi";
+import { FiBox, FiArrowLeft } from "react-icons/fi";
 import "./App.css";
 import type { InputData, PackingResult, AppView } from "./types";
 import { sampleData } from "./utils/sampleData";
@@ -34,11 +34,21 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>
-          <FiBox className="app-header__icon" />
-          Container Packing Visualizer
-        </h1>
-        <p className="subtitle">Optimize and visualize your shipment</p>
+        <div className="app-header__left">
+          {currentView === "visualizer" && (
+            <button onClick={handleBack} className="back-button">
+              <FiArrowLeft className="back-button__icon" />
+              Back
+            </button>
+          )}
+        </div>
+        <div className="app-header__center">
+          <h1>
+            <FiBox className="app-header__icon" />
+            Container Packing Visualizer
+          </h1>
+        </div>
+        <div className="app-header__right"></div>
       </header>
 
       <main className="app-main">
@@ -48,7 +58,7 @@ function App() {
           <Visualizer3D
             container={inputData.container}
             packingResult={packingResult}
-            onBack={handleBack}
+            initialBoxTypes={inputData.boxTypes}
           />
         )}
       </main>

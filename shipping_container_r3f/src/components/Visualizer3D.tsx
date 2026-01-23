@@ -4,7 +4,6 @@ import { OrbitControls } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import {
-  FiArrowLeft,
   FiRotateCcw,
   FiBox,
   FiPercent,
@@ -21,21 +20,28 @@ import {
   FiInfo,
   FiChevronUp,
   FiChevronDown,
+  FiEdit3,
+  FiRefreshCw,
 } from "react-icons/fi";
-import { LuWeight, LuShip } from "react-icons/lu";
-import type { PackingResult, Container, PackedBox } from "../types";
+import { LuWeight } from "react-icons/lu";
+import type { PackingResult, Container, PackedBox, BoxType } from "../types";
+import { packBoxes } from "../services/PackingAlgorithm";
 import BoxMesh from "./BoxMesh";
 
 interface Visualizer3DProps {
   container: Container;
   packingResult: PackingResult | null;
-  onBack: () => void;
+  initialBoxTypes: BoxType[];
 }
 
 /**
  * 3D Visualizer component using React Three Fiber
  */
-function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
+function Visualizer3D({
+  container,
+  packingResult: initialPackingResult,
+  initialBoxTypes,
+}: Visualizer3DProps) {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [hoveredBox, setHoveredBox] = useState<PackedBox | null>(null);
@@ -47,6 +53,12 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
   const [isPanLocked, setIsPanLocked] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
+  const [showQuantityEditor, setShowQuantityEditor] = useState(false);
+  const [boxTypes, setBoxTypes] = useState<BoxType[]>(initialBoxTypes);
+  const [packingResult, setPackingResult] = useState<PackingResult | null>(
+    initialPackingResult,
+  );
+  const [isRecalculating, setIsRecalculating] = useState(false);
 
   // Scale factor to make container fit nicely in view
   const scale = 0.01; // Convert cm to a reasonable 3D unit
@@ -198,17 +210,34 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
     }
   };
 
+  // Handle quantity change for a box type
+  const handleQuantityChange = (boxTypeId: string, newQuantity: number) => {
+    setBoxTypes((prev) =>
+      prev.map((bt) =>
+        bt.id === boxTypeId
+          ? { ...bt, quantity: Math.max(0, newQuantity) }
+          : bt,
+      ),
+    );
+  };
+
+  // Recalculate packing with updated quantities
+  const handleRecalculate = () => {
+    setIsRecalculating(true);
+
+    // Small delay to show loading state
+    setTimeout(() => {
+      const result = packBoxes(container, boxTypes);
+      setPackingResult(result);
+      setIsRecalculating(false);
+      setSelectedBoxTypeId(null);
+      setHoveredBox(null);
+    }, 100);
+  };
+
   return (
     <div className="visualizer-container">
       <div className="visualizer-header">
-        <button onClick={onBack} className="back-button">
-          <FiArrowLeft className="back-button__icon" />
-          Back
-        </button>
-        <div className="visualizer-header__title">
-          <LuShip className="visualizer-header__icon" />
-          <h2>3D View</h2>
-        </div>
         <div className="visualizer-header__controls">
           <button
             onClick={() => setIsPanLocked(!isPanLocked)}
@@ -216,6 +245,13 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
             title={isPanLocked ? "Unlock Panning" : "Lock Panning"}
           >
             {isPanLocked ? <FiLock /> : <FiUnlock />}
+          </button>
+          <button
+            onClick={() => setShowQuantityEditor(!showQuantityEditor)}
+            className={`control-button ${showQuantityEditor ? "active" : ""}`}
+            title="Edit Quantities"
+          >
+            <FiEdit3 />
           </button>
           <button
             onClick={() => setShowStats(!showStats)}
@@ -262,13 +298,7 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
           <directionalLight position={[-5, 5, -5]} intensity={0.3} />
 
           {/* Container wireframe */}
-          <mesh
-            position={[
-              (container.length * scale) / 2,
-              (container.height * scale) / 2,
-              (container.width * scale) / 2,
-            ]}
-          >
+          <mesh position={[0, (container.height * scale) / 2, 0]}>
             <boxGeometry
               args={[
                 container.length * scale,
@@ -284,6 +314,7 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
             <BoxMesh
               key={box.id}
               box={box}
+              container={container}
               scale={scale}
               onHover={handleBoxHover}
               onClick={handleBoxClick}
@@ -297,7 +328,7 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
           ))}
 
           {/* Ground plane for reference */}
-          <gridHelper args={[5, 20, "#666", "#444"]} position={[1, 0, 1]} />
+          <gridHelper args={[20, 30, "#666", "#444"]} position={[0, 0, 0]} />
 
           {/* Camera controls */}
           <OrbitControls
@@ -305,6 +336,7 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
             enablePan={!isPanLocked}
             enableZoom={true}
             enableRotate={true}
+            zoomToCursor={true}
             minDistance={0.5}
             maxDistance={30}
           />
@@ -430,6 +462,113 @@ function Visualizer3D({ container, packingResult, onBack }: Visualizer3DProps) {
             title="Exit fullscreen"
           >
             <FiMinimize /> Exit Fullscreen
+          </button>
+        )}
+
+        {/* Quantity Editor Panel */}
+        {showQuantityEditor && (
+          <div className="quantity-editor">
+            <div className="quantity-editor__header">
+              <h3 className="quantity-editor__title">Edit</h3>
+              <button
+                className="quantity-editor__close-btn"
+                onClick={() => setShowQuantityEditor(false)}
+                title="Close"
+              >
+                <FiChevronUp />
+              </button>
+            </div>
+
+            <div className="quantity-editor__list">
+              {boxTypes.map((boxType) => (
+                <div key={boxType.id} className="quantity-editor__item">
+                  <div className="quantity-editor__color">
+                    <div
+                      className="quantity-editor__color-swatch"
+                      style={{ backgroundColor: boxType.color }}
+                    />
+                  </div>
+                  <div className="quantity-editor__info">
+                    <span className="quantity-editor__name">
+                      {boxType.name}
+                    </span>
+                    <span className="quantity-editor__dims">
+                      {boxType.length}×{boxType.width}×{boxType.height} cm
+                      {boxType.isFragile && (
+                        <span className="quantity-editor__fragile">
+                          {" "}
+                          • Fragile
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div className="quantity-editor__controls">
+                    <button
+                      className="quantity-editor__btn quantity-editor__btn--minus"
+                      onClick={() =>
+                        handleQuantityChange(boxType.id, boxType.quantity - 1)
+                      }
+                      disabled={boxType.quantity <= 0}
+                      title="Decrease"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      className="quantity-editor__input"
+                      value={boxType.quantity}
+                      onChange={(e) =>
+                        handleQuantityChange(
+                          boxType.id,
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
+                      min="0"
+                    />
+                    <button
+                      className="quantity-editor__btn quantity-editor__btn--plus"
+                      onClick={() =>
+                        handleQuantityChange(boxType.id, boxType.quantity + 1)
+                      }
+                      title="Increase"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="quantity-editor__actions">
+              <button
+                className="quantity-editor__recalc-btn"
+                onClick={handleRecalculate}
+                disabled={isRecalculating}
+              >
+                {isRecalculating ? (
+                  <>
+                    <FiRefreshCw className="quantity-editor__recalc-icon--spin" />
+                    Calculating...
+                  </>
+                ) : (
+                  <>
+                    <FiRefreshCw />
+                    Recalculate Packing
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Quantity Editor Toggle Button (when hidden) */}
+        {!showQuantityEditor && (
+          <button
+            className="quantity-editor__toggle-btn"
+            onClick={() => setShowQuantityEditor(true)}
+            title="Edit Quantities"
+          >
+            Edit Quantities
           </button>
         )}
       </div>
